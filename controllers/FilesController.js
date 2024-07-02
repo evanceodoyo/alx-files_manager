@@ -124,7 +124,7 @@ export default class FilesController {
 
     const fileDocuments = await (await dbClient.filesCollection())
       .aggregate([
-        { $match: { userId: ObjectId(userId), parentId } },
+        { $match: { userId: ObjectId(userId), parentId: ObjectId(parentId) } },
         { $skip: page * pageSize },
         { $limit: pageSize },
       ])
