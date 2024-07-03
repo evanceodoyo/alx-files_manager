@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import mime from 'mime-types';
 import fs from 'fs';
 import path from 'path';
-import Queue from 'bull';
+import Queue from 'bull/lib/queue';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
 
@@ -73,7 +73,7 @@ export default class FilesController {
     const result = await (await dbClient.filesCollection()).insertOne(fileDocument);
 
     if (type === 'image') {
-      await fileQueue.add({ userId, fileId: result.insertedId.toString() });
+      fileQueue.add({ userId, fileId: result.insertedId.toString() });
     }
 
     return res.status(201).json({
