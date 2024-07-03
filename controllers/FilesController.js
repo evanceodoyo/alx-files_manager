@@ -218,6 +218,8 @@ export default class FilesController {
     const userId = await redisClient.get(`auth_${token}`);
 
     const fileID = req.params.id;
+    const { size } = req.query;
+
     const fileDocument = await (await dbClient.filesCollection()).findOne({
       _id: ObjectId(fileID),
     });
@@ -227,10 +229,19 @@ export default class FilesController {
     if (!fileDocument.isPublic && (!userId || !fileDocument.userId.equals(ObjectId(userId)))) {
       return res.status(404).json({ error: 'Not found' });
     }
+
     if (fileDocument.type === 'folder') {
       return res.status(400).json({ error: 'A folder doesn\'t have content' });
     }
-    if (!fileDocument.localPath || !fs.existsSync(fileDocument.localPath)) {
+
+    let { localPath } = fileDocument;
+
+    if (size) {
+      if (['100', '250', '500'].includes(size)) {
+        localPath = `${fileDocument.localPath}_${size}`;
+      }
+    }
+    if (!fs.existsSync(localPath)) {
       return res.status(404).json({ error: 'Not found' });
     }
 
