@@ -32,6 +32,10 @@ class DBClient {
   async filesCollection() {
     return this.client.db().collection('files');
   }
+
+  async deleteFiles() {
+    return this.client.db().collection('files').drop();
+  }
 }
 
 const dbClient = new DBClient();
