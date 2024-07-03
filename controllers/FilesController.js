@@ -3,8 +3,11 @@ import { v4 as uuidv4 } from 'uuid';
 import mime from 'mime-types';
 import fs from 'fs';
 import path from 'path';
+import Queue from 'bull';
 import dbClient from '../utils/db';
 import redisClient from '../utils/redis';
+
+const fileQueue = new Queue('fileQueue');
 
 export default class FilesController {
   static async postUpload(req, res) {
@@ -68,6 +71,10 @@ export default class FilesController {
     }
 
     const result = await (await dbClient.filesCollection()).insertOne(fileDocument);
+
+    if (type === 'image') {
+      await fileQueue.add({ userId, fileId: result.insertedId.toString() });
+    }
 
     return res.status(201).json({
       id: result.insertedId,
@@ -227,9 +234,7 @@ export default class FilesController {
       return res.status(404).json({ error: 'Not found' });
     }
 
-    const mimeType = mime.lookup(fileDocument.name);
-
-    res.setHeader('Content-Type', mimeType);
+    res.setHeader('Content-Type', mime.lookup(fileDocument.name));
     const fileStream = fs.createReadStream(fileDocument.localPath);
     return fileStream.pipe(res);
   }
